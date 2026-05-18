@@ -204,6 +204,25 @@ The repository includes a CSV that exercises the main validation rules:
 - invalid allowed value
 - missing required value
 
+Input snapshot from `examples/validation_matrix.csv`:
+
+```csv
+order_id,amount,created_at,status,discount
+ok-001,99.95,2026-05-17T10:00:00+00:00,paid,10
+dup-001,25.00,2026-05-17T10:05:00+00:00,new,0
+dup-001,30.00,2026-05-17T10:10:00+00:00,paid,5
+,12.00,2026-05-17T10:15:00+00:00,paid,3
+bad-amount-type,not-a-number,2026-05-17T10:20:00+00:00,paid,8
+bad-amount-min,-1,2026-05-17T10:25:00+00:00,paid,8
+bad-amount-max,1500,2026-05-17T10:30:00+00:00,paid,8
+bad-date,42.00,not-a-date,paid,8
+bad-status,42.00,2026-05-17T10:35:00+00:00,cancelled,8
+missing-status,42.00,2026-05-17T10:40:00+00:00,,8
+bad-discount-min,42.00,2026-05-17T10:45:00+00:00,paid,-5
+bad-discount-max,42.00,2026-05-17T10:50:00+00:00,paid,105
+bad-discount-type,42.00,2026-05-17T10:55:00+00:00,paid,free
+```
+
 Run it:
 
 ```bash
@@ -216,6 +235,40 @@ Expected output:
 ```text
 recorded incident_validation_matrix status=failed rows=13 violations=16
 replayed incident_validation_matrix status=failed rows=13 violations=16
+```
+
+`rows=13` means Pipeflight scanned 13 CSV records. `violations=16` means it found 16 rule failures across those rows. One row can create more than one violation when it breaks more than one rule.
+
+Why this example produces 16 violations:
+
+| Input row | What it proves | Violations |
+| --- | --- | --- |
+| `ok-001` | valid row | 0 |
+| first `dup-001` | first value for a unique key is accepted | 0 |
+| second `dup-001` | duplicate key detection | 1: `order_id unique` |
+| empty `order_id` | required key and CLI key check | 2: `order_id required`, `order_id key` |
+| `bad-amount-type` | non-numeric amount | 3: `amount type`, `amount min`, `amount max` |
+| `bad-amount-min` | amount below minimum | 1: `amount min` |
+| `bad-amount-max` | amount above maximum | 1: `amount max` |
+| `bad-date` | invalid datetime | 1: `created_at type` |
+| `bad-status` | value outside allowed list | 1: `status allowed` |
+| `missing-status` | required field is empty | 1: `status required` |
+| `bad-discount-min` | optional numeric field below minimum | 1: `discount min` |
+| `bad-discount-max` | optional numeric field above maximum | 1: `discount max` |
+| `bad-discount-type` | non-numeric optional value | 3: `discount type`, `discount min`, `discount max` |
+
+Total: `0 + 0 + 1 + 2 + 3 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 3 = 16`.
+
+The same run also proves the output bundle:
+
+```text
+incident_validation_matrix/
+  manifest.json          # status=failed, rows=13, violations=16
+  failing_rows.parquet   # only rows that failed validation
+  schema.json            # inferred types such as amount=mixed
+  stats.json             # null counts, min/max values, latest timestamps
+  report.html            # human-readable list of violations
+  replay.py              # local replay helper
 ```
 
 ## Run Tests
