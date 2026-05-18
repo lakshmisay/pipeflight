@@ -9,6 +9,7 @@ dist/
 build/
 *.egg-info/
 *.zip
+uv.lock
 .venv/
 venv/
 incidents/

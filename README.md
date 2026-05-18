@@ -29,11 +29,11 @@ You can attach that folder to a ticket, send it to another engineer, or replay i
 
 ## Demo
 
-![Pipeflight terminal demo](docs/assets/pipeflight_terminal_demo.gif)
+![Pipeflight terminal demo](https://raw.githubusercontent.com/lakshmisay/pipeflight/main/docs/assets/pipeflight_terminal_demo.gif)
 
 Pipeflight turns a failing dataset into a portable incident bundle:
 
-![Pipeflight incident bundle](docs/assets/pipeflight_incident_folder_screenshot.png)
+![Pipeflight incident bundle](https://raw.githubusercontent.com/lakshmisay/pipeflight/main/docs/assets/pipeflight_incident_folder_screenshot.png)
 
 ## Why Incident Replay Matters
 
