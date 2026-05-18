@@ -86,6 +86,8 @@ Pipeflight accepts:
 - optional contract files: JSON, or YAML when installed with `pipeflight[yaml]`
 - optional key column: used to detect missing identifiers
 
+Pipeflight is designed for tabular datasets: rows with columns/fields and scalar values.
+
 Example:
 
 ```bash
@@ -108,6 +110,45 @@ Example output:
 ```text
 recorded incident_validation_matrix status=failed rows=13 violations=16
 ```
+
+## Supported Data In v0.1
+
+Pipeflight works with common tabular data files:
+
+```bash
+pipeflight record your_data.csv
+pipeflight record your_data.parquet
+pipeflight record your_data.jsonl
+```
+
+Without a contract, Pipeflight still records useful evidence: schema, stats, manifest, report, replay script, and an empty failing-rows artifact if no validation rules fail.
+
+To detect data quality failures, provide a contract:
+
+```bash
+pipeflight record your_data.csv --key id --contract your_contract.json
+```
+
+Example contract:
+
+```json
+{
+  "columns": {
+    "id": { "required": true, "unique": true },
+    "amount": { "type": "number", "min": 0 },
+    "created_at": { "type": "datetime", "required": true }
+  }
+}
+```
+
+Current limits:
+
+- Excel files are not supported yet: `.xlsx`
+- databases are not supported directly yet
+- nested JSON arrays are not supported directly
+- JSON input should be JSON Lines: one object per line
+- each row should be tabular: column names mapped to values
+- Parquet support requires `pyarrow`, which is installed as a package dependency
 
 ## Why Pipeflight?
 
