@@ -27,6 +27,23 @@ incident_2026_05_18_112233/
 
 You can attach that folder to a ticket, send it to another engineer, or replay it locally without sharing the full source dataset.
 
+## Try In 60 Seconds
+
+```bash
+pip install pipeflight
+pipeflight record your_data.csv
+pipeflight replay incident_*
+```
+
+For a validation example with known failures:
+
+```bash
+git clone https://github.com/lakshmisay/pipeflight.git
+cd pipeflight
+uv run pipeflight record examples/validation_matrix.csv --key order_id --contract examples/validation_matrix.contract.json --out incident_validation_matrix
+uv run pipeflight replay incident_validation_matrix
+```
+
 ## Demo
 
 ![Pipeflight terminal demo](https://raw.githubusercontent.com/lakshmisay/pipeflight/main/docs/assets/pipeflight_terminal_demo.gif)
