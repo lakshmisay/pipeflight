@@ -1,0 +1,77 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pipeflight"
+version = "0.1.0"
+description = "A black box recorder for data pipeline incidents."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+  { name = "Pipeflight Contributors" }
+]
+keywords = [
+  "data-quality",
+  "data-engineering",
+  "incident-response",
+  "pipeline",
+  "schema-drift",
+  "replay"
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Information Technology",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Database",
+  "Topic :: Software Development :: Quality Assurance"
+]
+dependencies = ["pyarrow>=14"]
+
+[project.optional-dependencies]
+yaml = ["PyYAML>=6"]
+dev = ["pytest>=8", "build>=1", "twine>=5"]
+
+[project.urls]
+Homepage = "https://github.com/lakshmisay/pipeflight"
+Repository = "https://github.com/lakshmisay/pipeflight"
+Issues = "https://github.com/lakshmisay/pipeflight/issues"
+
+[project.scripts]
+pipeflight = "pipeflight.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/src",
+  "/tests",
+  "/examples",
+  "/README.md",
+  "/CONTRIBUTING.md",
+  "/RELEASE.md",
+  "/LICENSE",
+  "/pyproject.toml",
+  "/.github/workflows/ci.yml"
+]
+exclude = [
+  "/dist",
+  "/incidents",
+  "/incident_*",
+  "**/__pycache__",
+  "**/.pytest_cache",
+  "*.egg-info"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pipeflight"]
