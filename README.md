@@ -2,13 +2,13 @@
 
 **A black box recorder for data pipelines.**
 
-Most data quality tools tell you something failed. Pipeflight preserves the evidence bundle you need to debug the incident later: failing rows, schema snapshot, stats, report, and a replay script.
+Most data quality tools tell you that something failed. Pipeflight preserves the evidence you need to debug it later: failing rows, schema snapshot, stats, report, and a replay script.
 
 ```bash
-pipeflight record orders.parquet
+pipeflight record orders.parquet --key order_id --contract orders.contract.json
 ```
 
-Generates:
+Pipeflight creates a small incident folder:
 
 ```text
 incident_2026_05_18_112233/
@@ -20,16 +20,34 @@ incident_2026_05_18_112233/
   report.html
 ```
 
+You can attach that folder to a ticket, send it to another engineer, or replay it locally without sharing the full source dataset.
+
+## What Problem Does It Solve?
+
+When a production data pipeline fails, the original dataset can be huge, sensitive, temporary, or already overwritten. The team may know that validation failed, but not have the exact rows, schema, or stats needed to reproduce the incident.
+
+Pipeflight records a compact evidence bundle at failure time so debugging is reproducible.
+
+It helps answer:
+
+- Which exact rows failed validation?
+- Which rule failed?
+- What did the schema look like?
+- How many rows were scanned?
+- Was the timestamp data stale?
+- Can another engineer replay the incident locally?
+
 ## How It Works
 
 ```text
-Pipeline failure
+Dataset + optional contract
        |
        v
-pipeflight record orders.parquet
+pipeflight record orders.parquet --key order_id --contract orders.contract.json
        |
        v
 Incident bundle
+  |-- manifest.json
   |-- failing_rows.parquet
   |-- schema.json
   |-- stats.json
@@ -41,6 +59,41 @@ pipeflight replay incident_2026_05_18_112233
        |
        v
 Reproducible debugging
+```
+
+## Input And Output
+
+### Input
+
+Pipeflight accepts:
+
+- CSV files: `.csv`
+- JSON Lines files: `.jsonl` or `.ndjson`
+- Parquet files: `.parquet`
+- optional contract files: JSON, or YAML when installed with `pipeflight[yaml]`
+- optional key column: used to detect missing identifiers
+
+Example:
+
+```bash
+pipeflight record examples/validation_matrix.csv --key order_id --contract examples/validation_matrix.contract.json --out incident_validation_matrix
+```
+
+### Output
+
+Pipeflight writes an incident directory containing:
+
+- `manifest.json`: run metadata, status, source path, row count, violation count
+- `failing_rows.parquet`: only the rows that failed validation
+- `schema.json`: inferred column types
+- `stats.json`: row count, null counts, min/max values, max datetimes
+- `report.html`: human-readable incident report
+- `replay.py`: tiny script for replaying the incident folder
+
+Example output:
+
+```text
+recorded incident_validation_matrix status=failed rows=13 violations=16
 ```
 
 ## Why Pipeflight?
@@ -87,30 +140,28 @@ Pipeflight focuses on:
 
 It is intentionally small in v0.1. No dashboards, no orchestration, no RBAC, no distributed system. Just a clean incident bundle.
 
-## Screenshot / GIF
-
-A short demo GIF will live here:
-
-```text
-pipeflight record examples/bad_orders.parquet
-tree incident_*
-pipeflight replay incident_*
-```
-
 ## Install
+
+From PyPI:
 
 ```bash
 pip install pipeflight
 ```
 
-For local development with `uv`:
+For local development:
 
 ```bash
 uv venv
 uv pip install -e ".[dev]"
 ```
 
-## Quick Demo
+If your local Python environment is stale, you can run commands through `uv` directly:
+
+```bash
+uv run pipeflight --help
+```
+
+## Quick Demo: Bad Orders
 
 Create a demo Parquet file:
 
@@ -137,6 +188,48 @@ recorded incident_2026_05_18_112233 status=failed rows=4 violations=5
 replayed incident_2026_05_18_112233 status=failed rows=4 violations=5
 ```
 
+The demo is expected to fail because the input intentionally contains invalid rows. A failed status means Pipeflight found evidence and preserved it.
+
+## Full Validation Matrix
+
+The repository includes a CSV that exercises the main validation rules:
+
+- valid row
+- duplicate key
+- missing key
+- bad number type
+- minimum value failure
+- maximum value failure
+- bad datetime
+- invalid allowed value
+- missing required value
+
+Run it:
+
+```bash
+uv run pipeflight record examples/validation_matrix.csv --key order_id --contract examples/validation_matrix.contract.json --out incident_validation_matrix
+uv run pipeflight replay incident_validation_matrix
+```
+
+Expected output:
+
+```text
+recorded incident_validation_matrix status=failed rows=13 violations=16
+replayed incident_validation_matrix status=failed rows=13 violations=16
+```
+
+## Run Tests
+
+```bash
+uv run pytest --basetemp .pytest_tmp -p no:cacheprovider
+```
+
+Expected result:
+
+```text
+3 passed
+```
+
 ## Python API
 
 ```python
@@ -157,6 +250,8 @@ print(replayed.violation_count)
 
 ## Contract Example
 
+Contracts describe the checks Pipeflight should run.
+
 ```json
 {
   "columns": {
@@ -170,6 +265,20 @@ print(replayed.violation_count)
   }
 }
 ```
+
+Supported column rules in v0.1:
+
+- `type`: `string`, `number`, `integer`, `datetime`, or `boolean`
+- `required`: value must be present and not empty
+- `unique`: duplicate values fail validation
+- `min`: numeric minimum
+- `max`: numeric maximum
+- `allowed`: list of accepted values
+
+Supported freshness rule:
+
+- `freshness.column`: datetime column to inspect
+- `freshness.max_age_seconds`: maximum allowed age of the latest timestamp
 
 ## Example Scenarios
 
