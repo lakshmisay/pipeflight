@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from pipeflight import record_incident, replay_incident
+from pipeflight.cli import main
 
 
 def test_record_incident_captures_failing_rows(tmp_path: Path) -> None:
@@ -51,3 +52,16 @@ def test_replay_incident_reads_artifacts(tmp_path: Path) -> None:
     assert result.status == "passed"
     assert result.row_count == 1
     assert result.violation_count == 0
+
+
+def test_replay_cli_expands_wildcard_patterns(tmp_path: Path, capsys) -> None:
+    source = tmp_path / "orders.jsonl"
+    incident = tmp_path / "incident_demo"
+    source.write_text('{"order_id": "a", "amount": 10}\n', encoding="utf-8")
+
+    record_incident(source, incident, key="order_id")
+
+    exit_code = main(["replay", str(tmp_path / "incident_*")])
+
+    assert exit_code == 0
+    assert "replayed" in capsys.readouterr().out
