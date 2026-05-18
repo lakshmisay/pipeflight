@@ -1,5 +1,10 @@
 # Pipeflight
 
+[![CI](https://github.com/lakshmisay/pipeflight/actions/workflows/ci.yml/badge.svg)](https://github.com/lakshmisay/pipeflight/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/pipeflight.svg)](https://pypi.org/project/pipeflight/)
+[![Python](https://img.shields.io/pypi/pyversions/pipeflight.svg)](https://pypi.org/project/pipeflight/)
+[![License](https://img.shields.io/github/license/lakshmisay/pipeflight.svg)](LICENSE)
+
 **A black box recorder for data pipelines.**
 
 Most data quality tools tell you that something failed. Pipeflight preserves the evidence you need to debug it later: failing rows, schema snapshot, stats, report, and a replay script.
@@ -22,7 +27,7 @@ incident_2026_05_18_112233/
 
 You can attach that folder to a ticket, send it to another engineer, or replay it locally without sharing the full source dataset.
 
-## What Problem Does It Solve?
+## Why Incident Replay Matters
 
 When a production data pipeline fails, the original dataset can be huge, sensitive, temporary, or already overwritten. The team may know that validation failed, but not have the exact rows, schema, or stats needed to reproduce the incident.
 
@@ -139,6 +144,8 @@ Pipeflight focuses on:
 - forensic debugging
 
 It is intentionally small in v0.1. No dashboards, no orchestration, no RBAC, no distributed system. Just a clean incident bundle.
+
+Pipeflight intentionally prioritizes portable incident artifacts over centralized observability infrastructure.
 
 ## Install
 
@@ -296,6 +303,12 @@ incident_validation_matrix/
   replay.py              # local replay helper
 ```
 
+## Security Note
+
+Pipeflight may preserve failing rows inside incident bundles. Avoid storing sensitive production data without masking, tokenization, or redaction policies.
+
+Future versions may include optional PII masking before writing `failing_rows.parquet` and `report.html`.
+
 ## Run Tests
 
 ```bash
@@ -382,7 +395,7 @@ Later versions can add integrations, but the first promise is simple:
 
 ## Later Roadmap
 
-One likely future command:
+The flagship future command is incident comparison:
 
 ```bash
 pipeflight compare incident_a incident_b
@@ -391,9 +404,12 @@ pipeflight compare incident_a incident_b
 Potential output:
 
 - schema diff
+- row count delta
 - null drift
 - freshness drift
-- row count delta
+- cardinality changes
+- changed violation patterns
+- newly failing or newly passing columns
 
 ## License
 
