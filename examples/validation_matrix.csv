@@ -1,0 +1,14 @@
+order_id,amount,created_at,status,discount
+ok-001,99.95,2026-05-17T10:00:00+00:00,paid,10
+dup-001,25.00,2026-05-17T10:05:00+00:00,new,0
+dup-001,30.00,2026-05-17T10:10:00+00:00,paid,5
+,12.00,2026-05-17T10:15:00+00:00,paid,3
+bad-amount-type,not-a-number,2026-05-17T10:20:00+00:00,paid,8
+bad-amount-min,-1,2026-05-17T10:25:00+00:00,paid,8
+bad-amount-max,1500,2026-05-17T10:30:00+00:00,paid,8
+bad-date,42.00,not-a-date,paid,8
+bad-status,42.00,2026-05-17T10:35:00+00:00,cancelled,8
+missing-status,42.00,2026-05-17T10:40:00+00:00,,8
+bad-discount-min,42.00,2026-05-17T10:45:00+00:00,paid,-5
+bad-discount-max,42.00,2026-05-17T10:50:00+00:00,paid,105
+bad-discount-type,42.00,2026-05-17T10:55:00+00:00,paid,free

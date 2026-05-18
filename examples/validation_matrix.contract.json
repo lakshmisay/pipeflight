@@ -1,0 +1,13 @@
+{
+  "columns": {
+    "order_id": { "type": "string", "required": true, "unique": true },
+    "amount": { "type": "number", "required": true, "min": 0, "max": 1000 },
+    "created_at": { "type": "datetime", "required": true },
+    "status": { "type": "string", "required": true, "allowed": ["new", "paid", "shipped"] },
+    "discount": { "type": "number", "required": false, "min": 0, "max": 100 }
+  },
+  "freshness": {
+    "column": "created_at",
+    "max_age_seconds": 315360000
+  }
+}
