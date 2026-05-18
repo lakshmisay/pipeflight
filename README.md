@@ -237,27 +237,52 @@ recorded incident_validation_matrix status=failed rows=13 violations=16
 replayed incident_validation_matrix status=failed rows=13 violations=16
 ```
 
-`rows=13` means Pipeflight scanned 13 CSV records. `violations=16` means it found 16 rule failures across those rows. One row can create more than one violation when it breaks more than one rule.
+`rows=13` means Pipeflight scanned 13 CSV records.
 
-Why this example produces 16 violations:
+`violations=16` means Pipeflight found 16 broken rules. This is not the same as 16 bad rows. Some rows break more than one rule.
 
-| Input row | What it proves | Violations |
+For example:
+
+```csv
+bad-amount-type,not-a-number,2026-05-17T10:20:00+00:00,paid,8
+```
+
+That one row creates 3 violations because `amount` is expected to be a number, must be at least `0`, and must be at most `1000`. Since `not-a-number` is not numeric, it fails all three amount checks.
+
+Capability proof:
+
+| Capability | Example input row | Expected result |
 | --- | --- | --- |
-| `ok-001` | valid row | 0 |
-| first `dup-001` | first value for a unique key is accepted | 0 |
-| second `dup-001` | duplicate key detection | 1: `order_id unique` |
-| empty `order_id` | required key and CLI key check | 2: `order_id required`, `order_id key` |
-| `bad-amount-type` | non-numeric amount | 3: `amount type`, `amount min`, `amount max` |
-| `bad-amount-min` | amount below minimum | 1: `amount min` |
-| `bad-amount-max` | amount above maximum | 1: `amount max` |
-| `bad-date` | invalid datetime | 1: `created_at type` |
-| `bad-status` | value outside allowed list | 1: `status allowed` |
-| `missing-status` | required field is empty | 1: `status required` |
-| `bad-discount-min` | optional numeric field below minimum | 1: `discount min` |
-| `bad-discount-max` | optional numeric field above maximum | 1: `discount max` |
-| `bad-discount-type` | non-numeric optional value | 3: `discount type`, `discount min`, `discount max` |
+| Accept valid data | `ok-001,99.95,...,paid,10` | 0 violations |
+| Detect duplicate IDs | second `dup-001` row | 1 violation: `order_id unique` |
+| Detect missing required key | row with empty `order_id` | 2 violations: `order_id required`, `order_id key` |
+| Detect wrong numeric type | `amount=not-a-number` | 3 violations: `amount type`, `amount min`, `amount max` |
+| Detect value below minimum | `amount=-1` | 1 violation: `amount min` |
+| Detect value above maximum | `amount=1500` | 1 violation: `amount max` |
+| Detect bad datetime | `created_at=not-a-date` | 1 violation: `created_at type` |
+| Detect value outside allowed set | `status=cancelled` | 1 violation: `status allowed` |
+| Detect missing required field | empty `status` | 1 violation: `status required` |
+| Detect optional field below minimum | `discount=-5` | 1 violation: `discount min` |
+| Detect optional field above maximum | `discount=105` | 1 violation: `discount max` |
+| Detect wrong optional numeric type | `discount=free` | 3 violations: `discount type`, `discount min`, `discount max` |
 
-Total: `0 + 0 + 1 + 2 + 3 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 3 = 16`.
+Violation count:
+
+```text
+0 valid-row violations
++ 1 duplicate key
++ 2 missing key checks
++ 3 bad amount type checks
++ 1 amount minimum
++ 1 amount maximum
++ 1 bad datetime
++ 1 invalid status
++ 1 missing status
++ 1 discount minimum
++ 1 discount maximum
++ 3 bad discount type checks
+= 16 violations
+```
 
 The same run also proves the output bundle:
 
