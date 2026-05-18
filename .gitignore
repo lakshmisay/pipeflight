@@ -8,6 +8,7 @@ htmlcov/
 dist/
 build/
 *.egg-info/
+*.zip
 .venv/
 venv/
 incidents/

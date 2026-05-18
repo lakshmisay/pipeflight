@@ -27,6 +27,14 @@ incident_2026_05_18_112233/
 
 You can attach that folder to a ticket, send it to another engineer, or replay it locally without sharing the full source dataset.
 
+## Demo
+
+![Pipeflight terminal demo](docs/assets/pipeflight_terminal_demo.gif)
+
+Pipeflight turns a failing dataset into a portable incident bundle:
+
+![Pipeflight incident bundle](docs/assets/pipeflight_incident_folder_screenshot.png)
+
 ## Why Incident Replay Matters
 
 When a production data pipeline fails, the original dataset can be huge, sensitive, temporary, or already overwritten. The team may know that validation failed, but not have the exact rows, schema, or stats needed to reproduce the incident.
